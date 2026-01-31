@@ -672,7 +672,7 @@ const INITIAL_QUESTION_BANK = [
     },
     {
         id: 1029, topic: 'T-Tests', difficulty: 'Medium',
-        text: 'כיצד נכון לדווח על תוצאות הANOVA בפלט 9?',
+        text: 'כיצד נכון לדווח על תוצאת הANOVA בפלט 9?',
         options: [
             'F(2,2205)=75.71, p<.001',
             'F(2205,2)=75.71, p<.05',
@@ -1133,18 +1133,28 @@ function AddQuestionForm({ onSave, onCancel, topics, initialData = null, showNot
 export default function App() {
     const [step, setStep] = useState('config'); 
     
-    // -- LocalStorage Initialization --
+    // -- LocalStorage Initialization (UPDATED LOGIC) --
     const [questions, setQuestions] = useState(() => {
-        const saved = localStorage.getItem('statmaster_questions');
-        if (saved) {
+        // 1. Always start with the updated code-base questions as the source of truth
+        let combinedQuestions = [...INITIAL_QUESTION_BANK];
+
+        const savedJSON = localStorage.getItem('statmaster_questions');
+        if (savedJSON) {
             try {
-                return JSON.parse(saved);
+                const savedQuestions = JSON.parse(savedJSON);
+                
+                // 2. Identify custom questions added by the user manually (User generated)
+                // We identify them by checking if their ID does NOT exist in the code bank.
+                const initialIds = new Set(INITIAL_QUESTION_BANK.map(q => q.id));
+                const userCustomQuestions = savedQuestions.filter(q => !initialIds.has(q.id));
+                
+                // 3. Merge: Code questions + User custom questions
+                combinedQuestions = [...combinedQuestions, ...userCustomQuestions];
             } catch (e) {
                 console.error("Failed to parse questions from storage", e);
-                return INITIAL_QUESTION_BANK;
             }
         }
-        return INITIAL_QUESTION_BANK;
+        return combinedQuestions;
     });
 
     const [apiKey, setApiKey] = useState(() => {
