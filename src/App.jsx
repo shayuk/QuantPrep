@@ -1711,6 +1711,28 @@ export default function App() {
                     </div>
                 </div>
             )}
+            
+            <style>{`
+                @keyframes fade-in-down {
+                    0% { opacity: 0; transform: translate(-50%, -20px); }
+                    100% { opacity: 1; transform: translate(-50%, 0); }
+                }
+                @keyframes fade-in-up {
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes scale-in {
+                    0% { opacity: 0; transform: scale(0.9); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+                .animate-fade-in-down { animation: fade-in-down 0.3s ease-out forwards; }
+                .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+                .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+                .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+            `}</style>
         </div>
     );
 }
