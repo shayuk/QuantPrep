@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Download, RefreshCw, CheckCircle, AlertCircle, Settings, Play, Edit, Plus, Image as ImageIcon, X, Trash2, Database, Search, Save, ArrowRight, AlertTriangle, Sparkles, Loader2, Lightbulb, Key, RotateCcw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-// --- MOCK DATA EXTRACTED FROM FILES ---
+// --- INITIAL DATA BANK ---
 const INITIAL_QUESTION_BANK = [
-    // --- GENERAL / DATA MANAGEMENT ---
+    // --- EXISTING QUESTIONS (ORIGINAL BANK) ---
     {
         id: 101, topic: 'General', difficulty: 'Easy',
         text: 'חוקרת רוצה לשמור את תוצאות הניתוחים הסטטיסטיים בלבד (טבלאות וגרפים), כך שגם אם הנתונים ישתנו, התוצאות יישארו. באיזה קובץ עליה להשתמש?',
@@ -40,8 +40,6 @@ const INITIAL_QUESTION_BANK = [
         correct: 0,
         output: null
     },
-
-    // --- DESCRIPTIVE STATISTICS ---
     {
         id: 201, topic: 'Descriptive', difficulty: 'Medium',
         text: 'על סמך הפלט המוצג: מהו אחוז האנשים שלמדו יותר מ-15 שנות לימוד? (התייחס ל-Valid Percent)',
@@ -78,8 +76,6 @@ const INITIAL_QUESTION_BANK = [
             ]
         }
     },
-
-    // --- RELIABILITY (CRONBACH) ---
     {
         id: 301, topic: 'Reliability', difficulty: 'Hard',
         text: 'לפניך פלט מהימנות. האלפא קרונבך היא 0.168. מהו הצעד הראשון לשיפור המהימנות?',
@@ -114,8 +110,6 @@ const INITIAL_QUESTION_BANK = [
             ]
         }
     },
-
-    // --- T-TESTS ---
     {
         id: 401, topic: 'T-Tests', difficulty: 'Medium',
         text: 'חוקרת בודקת הבדלים בשכר בין גברים לנשים (מדגמים בלתי תלויים). בפלט Levene, הערך Sig הוא 0.000. על איזו שורה בטבלה יש להסתכל?',
@@ -145,8 +139,6 @@ const INITIAL_QUESTION_BANK = [
             ]
         }
     },
-
-    // --- CHI-SQUARE / CROSSTABS ---
     {
         id: 501, topic: 'Chi-Square', difficulty: 'Medium',
         text: 'לפניך פלט Crosstabs (מגדר * מחלקה). הערה בתחתית הטבלה מציינת: "3 cells (30.0%) have expected count less than 5". האם ניתן להסתמך על מבחן חי-בריבוע של פירסון?',
@@ -169,8 +161,6 @@ const INITIAL_QUESTION_BANK = [
         correct: 0,
         output: null
     },
-
-    // --- REGRESSION / CORRELATION ---
     {
         id: 601, topic: 'Regression', difficulty: 'Hard',
         text: 'ברגרסיה לינארית, המודל כולו מובהק, ה-R בריבוע גבוה, אך לאף משתנה בלתי תלוי אין מובהקות סטטיסטית בטבלת המקדמים. מה הבעיה הסבירה?',
@@ -193,12 +183,595 @@ const INITIAL_QUESTION_BANK = [
             ]
         }
     },
-        {
+    {
         id: 603, topic: 'Correlation', difficulty: 'Easy',
         text: 'נמצא מתאם פירסון r=0.78 בין שעות לימוד לציון. מה המסקנה?',
         options: ['קשר חזק וחיובי', 'קשר חלש', 'אין קשר מובהק', 'קשר שלילי חזק'],
         correct: 0,
         output: null
+    },
+
+    // --- NEW QUESTIONS FROM FILE (מועד מיוחד תשפ"ה) ---
+    {
+        id: 1001, topic: 'General', difficulty: 'Medium',
+        text: 'מה נכון לומר לגבי פקודת RECODE INTO DIFFERENT VARIABLES בSPSS?',
+        options: [
+            'פקודה זו יוצרת משתנה חדש שבו ערכי המשתנה המקורי מקודדים מחדש או מקובצים לקטגוריות חדשות, בלי לשנות את המשתנה המקורי',
+            'פקודה זו מחשבת ממוצע של כמה משתנים לתוך משתנה חדש ואז מקבצת אותם לקטגוריה חדשה מבלי לשנות את המשתנה המקורי',
+            'פקודה זו משנה רק את שם המשתנה בלי לשנות את ערכיו',
+            'פקודה זו ממירה אוטומטית את כל הערכים החסרים לערך הממוצע במשתנה'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1002, topic: 'General', difficulty: 'Medium',
+        text: 'מרצה רוצה לבדוק האם קיים קשר בין שעות גלישה ברשתות חברתיות (social_time) לבין רמת לחץ (stress) בקרב נשים בלבד. מהי שרשרת הפקודות המתאימה ביותר בSPSS?',
+        options: [
+            'קודם להשתמש בSELECT CASES כדי לבחור מהמגדר רק נשים, ולאחר מכן להשתמש בCORRELATE BIVARIATE PEARSON ולהכניס את המשתנים social_time וstress',
+            'קודם להשתמש בCORRELATE BIVARIATE PEARSON על כל הסטודנטים, ולאחר מכן להשתמש בSPLIT FILE לפי משתנה המגדר',
+            'ראשית להשתמש בSPLIT FILE לפי משתנה המגדר, ולאחר מכן בCORRELATE BIVARIATE SPEARMAN על המשתנים social_time וstress',
+            'ראשית להשתמש בCOMPUTE ובIF כדי לבחור נשים בלבד, ולאחר מכן בFREQUENCIES על המשתנה stress'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1003, topic: 'General', difficulty: 'Easy',
+        text: 'חוקרת גילתה שבחלק מהמקרים התשובה של הנבדק היא "מסרב לענות" בשאלת "כמה שנות לימוד יש לך". כיצד נכון לטפל בערכים אלה בתוכנת SPSS לפני ביצוע ניתוחים?',
+        options: [
+            'בVariable View, בעמודת Missing, להגדיר ערך מספרי מסוים (למשל 99) כערך חסר עבור המשתנה',
+            'בData View, למחוק לגמרי את כל השורה של הנבדקים שבהם יש ערך חסר בשנות לימוד',
+            'בVariable View, לשנות את Measure של המשתנה לNominal כך שהערכים החסרים יתעלמו אוטומטית',
+            'בData View, להחליף את כל הערכים החסרים בערך 0 במקום להשאיר אותם ריקים'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1004, topic: 'General', difficulty: 'Hard',
+        text: 'מהו התיאור המתאים לרצף הפקודות הבא (משמאל לימין) בSPSS? Transform >> RECODE work_hours (0 thru 19=1) (20 thru 60=2) INTO work_cat',
+        options: [
+            'קידוד מחדש של work_hours לתוך משתנה חדש work_cat שבו שתי קטגוריות: עד 19 שעות עבודה בשבוע ומ20 עד 60 שעות עבודה בשבוע',
+            'קידוד מחדש של work_cat לתוך work_hours כך שהערכים 1 ו2 מומרות לשעות עבודה ממשיות',
+            'יצירת ממוצע של מספר שעות העבודה בשלושה שבועות שונים לתוך המשתנה work_cat',
+            'מחיקת כל הערכים של work_hours עבור מי שעובד פחות מ20 שעות בשבוע'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1005, topic: 'General', difficulty: 'Hard',
+        text: 'מרצה רוצה ליצור משתנה חדש בשם FINAL_SCORE שמייצג את ממוצע שלושת המבחנים TEST1, TEST2 וTEST3, אבל רק לסטודנטים בשנה א\' (year=1). מהי דרך העבודה הנכונה בSPSS?',
+        options: [
+            'להשתמש בCOMPUTE יחד עם IF, למשל : IF (year=1) FINAL_SCORE=MEAN (TEST1,TEST2,TEST3)',
+            'להשתמש בRECODE INTO DIFFERENT VARIABLES על שלושת המבחנים כך שFINAL_SCORE יהיה סכום הציונים של כל הסטודנטים',
+            'קודם לבצע SELECT CASES לפי year=1, ואז להשתמש בRECODE לתוך FINAL_SCORE כדי לחשב את הממוצע',
+            'להריץ FREQUENCIES על שלושת המבחנים ולאחר מכן להשתמש בSPLIT FILE לפי year כדי לקבל את FINAL_SCORE'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1006, topic: 'General', difficulty: 'Hard',
+        text: 'מנהל משאבי אנוש רוצה לתת בונוס רק ל10% העובדים שקיבלו את ציוני ההערכה הגבוהים ביותר במשתנה evaluation. לאחר שימצא את ציון הסף, הוא רוצה לחשב שכר חדש הכולל את הבונוס רק לעובדים אלו. מהי שרשרת הפקודות המתאימה ביותר?',
+        options: [
+            'קודם להריץ FREQUENCIES על evaluation כדי למצוא את הציון שמעליו נמצאים 10% מהעובדים (Percentile 90), ולאחר מכן להשתמש בCOMPUTE יחד עם IF כדי לחשב שכר חדש רק למי שעבר את ציון הסף',
+            'קודם להשתמש בSELECT CASES כדי לבחור את 10% העובדים הראשונים בקובץ, ולאחר מכן בCOMPUTE כדי לחשב שכר חדש',
+            'קודם להשתמש בCOMPUTE כדי לחשב את Percentile 10, ולאחר מכן בFREQUENCIES כדי להוסיף את הבונוס לעובדים הרלוונטיים',
+            'קודם להריץ FREQUENCIES על evaluation כדי למצוא את הממוצע, ולאחר מכן בRECODE INTO SAME VARIABLES כדי להעלות את ערך השכר ב10% לכל העובדים'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1007, topic: 'Reliability', difficulty: 'Medium',
+        text: 'על פי הפלט מהי הסיבה הסבירה ביותר לערך הנמוך במיוחד של מקדם המהימנות הכללי?',
+        options: [
+            'בחלק מהפריטים הניסוח הפוך, והם לא קודדו מחדש כך שכיוונם יהיה זהה לשאר הפריטים',
+            'מספר הפריטים בשאלון קטן מדי ולכן לא ניתן לחשב אלפא קרונבאך תקף',
+            'הציון של היגד wb10 מאוד נמוך ולכן מקדם המהימנות קטן בהכרח',
+            'מספר הנבדקים שנכללו בחישוב קטן מ30 ולכן אלפא קרונבאך תמיד יהיה נמוך'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Reliability Statistics',
+            headers: ['Cronbach\'s Alpha', 'N of Items'],
+            rows: [['.146', '12']]
+        }
+    },
+    {
+        id: 1008, topic: 'Reliability', difficulty: 'Easy',
+        text: 'על פי הפלט, מה נכון לגבי מבנה השאלון והמדגם שנבדק?',
+        options: [
+            'השאלון כולל 12 פריטים, ו68 נבדקים נכללו בחישוב מקדם המהימנות',
+            'השאלון כולל 10 פריטים, ו120 נבדקים נכללו בחישוב מקדם המהימנות',
+            'השאלון כולל 12 פריטים, וכל 120 המשתתפים נכללו בחישוב מקדם המהימנות',
+            'השאלון כולל 68 פריטים, ו12 נבדקים בלבד נכללו בחישוב מקדם המהימנות'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Case Processing Summary',
+            headers: ['Cases', 'N', '%'],
+            rows: [
+                ['Valid', '68', '56.7'],
+                ['Excluded', '52', '43.3'],
+                ['Total', '120', '100.0']
+            ]
+        }
+    },
+    {
+        id: 1009, topic: 'Descriptive', difficulty: 'Easy',
+        text: 'על פי הפלט, מהי רמת ההשכלה השכיחה ביותר במדגם (במונחי Valid Percent)?',
+        options: [
+            'תואר ראשון',
+            'תיכון',
+            'תעודה',
+            'דוקטורט'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'רמת השכלה',
+            headers: ['Value', 'Frequency', 'Percent', 'Valid Percent'],
+            rows: [
+                ['יסודי', '1', '3.3', '3.3'],
+                ['תיכון', '9', '30.0', '30.0'],
+                ['תעודה', '5', '16.7', '16.7'],
+                ['תואר ראשון', '11', '36.7', '36.7'],
+                ['תואר שני', '2', '6.7', '6.7'],
+                ['דוקטורט', '2', '6.7', '6.7'],
+                ['Total', '30', '100.0', '100.0']
+            ]
+        }
+    },
+    {
+        id: 1010, topic: 'Descriptive', difficulty: 'Medium',
+        text: 'על פי הפלט, איזה מן המשפטים הבאים נכון לגבי משתנה "שכר חודשי ברוטו (ש"ח)"?',
+        options: [
+            'כ25% מהמשיבים מדווחים על שכר חודשי שאינו עולה על 10,149 ₪',
+            'כ75% מהמשיבים מרוויחים לפחות 13,551.88 ₪ בחודש',
+            'השכר החציוני במדגם הוא 10,149 ₪',
+            'סטיית התקן של השכר היא 14.623 ₪'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Statistics - שכר חודשי ברוטו',
+            headers: ['Statistic', 'Value'],
+            rows: [
+                ['N Valid', '115'],
+                ['Mean', '11412.63'],
+                ['Median', '11463.50'],
+                ['Std. Deviation', '1668.87'],
+                ['Percentile 25', '10149.00'],
+                ['Percentile 50', '11463.50'],
+                ['Percentile 75', '12524.00']
+            ]
+        }
+    },
+    {
+        id: 1011, topic: 'Descriptive', difficulty: 'Hard',
+        text: 'מה ניתן להסיק מה השוואה בין הממוצע לבין החציון של השכר החודשי ברוטו בפלט?',
+        options: [
+            'הממוצע והחציון כמעט זהים, ולכן התפלגות השכר עשויה להיות סימטרית, ללא זנב קיצוני בולט',
+            'החציון נמוך בהרבה מהממוצע ולכן התפלגות השכר מוטה שמאלה בצורה קיצונית',
+            'אי אפשר להסיק דבר על ההתפלגות, משום שלא ניתנו נתונים על השכר השכיח או סטיית התקן.',
+            'ההבדל בין ממוצע לחציון מעיד שהתפלגות השכר היא נומינלית בלבד'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Statistics Summary',
+            headers: ['Statistic', 'Value'],
+            rows: [
+                ['Mean', '11412.63'],
+                ['Median', '11463.50']
+            ]
+        }
+    },
+    {
+        id: 1012, topic: 'Correlation', difficulty: 'Medium',
+        text: 'על פי הפלט, איזה מן המשפטים הבאים נכון?',
+        options: [
+            'קיים קשר חיובי מובהק ובעוצמה בינונית בין שעות שינה בלילה לבין שביעות רצון מהקורס',
+            'קיים קשר שלילי מובהק בעוצמה חלשה בין ציונך במבחן האחרון לבין שביעות רצון מהקורס',
+            'לא קיים קשר מובהק בין השכלה לבין שביעות רצון מהקורס',
+            'קיים קשר שלילי מובהק בעוצמה חלשה בין ההכנסה החודשית המשוערת לבין רמת ההשכלה'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Correlations (Partial View)',
+            headers: ['Pair', 'Pearson Correlation', 'Sig. (2-tailed)', 'N'],
+            rows: [
+                ['שעות שינה - שביעות רצון', '.478*', '.009', '28'],
+                ['ציון במבחן - שביעות רצון', '.278*', '.047', '26'],
+                ['השכלה - שביעות רצון', '-.118', '.533', '30'],
+                ['הכנסה - השכלה', '.401**', '.003', '28']
+            ]
+        }
+    },
+    {
+        id: 1013, topic: 'Correlation', difficulty: 'Hard',
+        text: 'על פי הפלט, מהו הדיווח המספרי המתאים לבדיקת ההשערה: "ימצא קשר בין שעות שינה בלילה לבין שביעות רצון מהקורס"?',
+        options: [
+            'r(28)=.48, p<.01',
+            'r(30)=.209, p>.05',
+            'r(28)=.47, p<.05',
+            'r(30)=.009, p<.01'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1014, topic: 'Correlation', difficulty: 'Medium',
+        text: 'על פי הפלט, מה נכון לגבי הקשרים בין "ציונך במבחן האחרון" לבין שאר המשתנים?',
+        options: [
+            'נמצא קשר חיובי מובהק בעוצמה בינונית בין ההכנסה החודשית המשוערת לבין רמת ההשכלה.',
+            'לא נמצא קשר מובהק בין הציון במבחן האחרון לבין אף אחד מהמשתנים האחרים לפי מתאם פירסון',
+            'נמצא קשר שלילי מובהק בין הציון במבחן לבין מספר האחים/האחיות',
+            'נמצא קשר חיובי מובהק חזק בין הציון במבחן לבין רמת ההשכלה'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1015, topic: 'Regression', difficulty: 'Medium',
+        text: 'על סמך פלט 4, מה ניתן להסיק לגבי מודל הרגרסיה?',
+        options: [
+            'ממוצע תמיכת המנהל בעבודה מנבא באופן מובהק את ממוצע תחושת הרווחה בעבודה, אך מסביר רק 16% מהשונות',
+            'מודל הרגרסיה הכולל את תמיכת המנהל אינו מובהק סטטיסטית כלל',
+            'ממוצע תחושת הרווחה בעבודה מנבא את תמיכת המנהל בעבודה, והמודל מסביר כמעט 40% מכל השונות',
+            'המודל מסביר מעל 70% מהשונות בתחושת הרווחה ולכן אין צורך בבדיקת מובהקות'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Model Summary & ANOVA',
+            headers: ['Model', 'R', 'R Square', 'F', 'Sig.'],
+            rows: [
+                ['1', '.395', '.156', '21.83', '<.001']
+            ]
+        }
+    },
+    {
+        id: 1016, topic: 'Regression', difficulty: 'Hard',
+        text: 'יש להשלים את המשפט הבא על פי פלט 4: המתאם בין ממוצע תמיכת המנהל בעבודה לבין ממוצע תחושת הרווחה בעבודה הוא____ , כך שתמיכת המנהל מסבירה כ______ מן השונות בתחושת הרווחה.',
+        options: [
+            '0.395 ; 15.6%',
+            '0.156 ; 39.5%',
+            '0.672 ; 45.2%',
+            '0.452 ; 67%'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1017, topic: 'Regression', difficulty: 'Hard',
+        text: 'כיצד נכון לדווח על בדיקת המובהקות של מודל הרגרסיה בפלט 4?',
+        options: [
+            'F(1,118)=21.83, p<.001',
+            'F(118,1)=21.83, p<.05',
+            'F(1,119)=21.83, p>.05',
+            'F(2,118)=21.83, p<.01'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'ANOVA',
+            headers: ['Model', 'df', 'F', 'Sig.'],
+            rows: [
+                ['Regression', '1', '21.83', '<.001'],
+                ['Residual', '118', '', ''],
+                ['Total', '119', '', '']
+            ]
+        }
+    },
+    {
+        id: 1018, topic: 'Correlation', difficulty: 'Easy',
+        text: 'בהנחה שהגרף בפלט 5 מציג נקודות המתפזרות סביב קו ליניארי ברור (והמתאם בין המשתנים נמצא מובהק), מה ניתן להסיק לגביו?',
+        options: [
+            'קיים קשר חיובי: ככל שהערך של המשתנה בציר הX גבוה יותר, כך נוטה גם הערך של המשתנה בציר הY להיות גבוה יותר',
+            'קיים קשר שלילי: ככל שהערך של המשתנה בציר הX גבוה יותר, כך הערך של המשתנה בציר הY נוטה להיות נמוך יותר',
+            'לא ניתן להסיק דבר על כיוון הקשר מתוך תרשים פיזור, אלא רק על בסיס טבלת מתאם',
+            'הקשר בין המשתנים הוא נומינלי בלבד ולכן לא צפוי דפוס כלשהו בתרשים הפיזור'
+        ],
+        correct: 0,
+        output: {
+            type: 'text',
+            title: 'תיאור גרף פיזור (Scatter Plot)',
+            text: 'הגרף מציג ענן נקודות עם מגמה עולה משמאל לימין.'
+        }
+    },
+    {
+        id: 1019, topic: 'Correlation', difficulty: 'Medium',
+        text: 'מה ניתן לומר על הקשר בין המשתנים מתוך הגרף בפלט 5?',
+        options: [
+            'קיים קשר חיובי בעוצמה בינונית',
+            'לא קיים קשר בין המשתנים',
+            'קיים קשר שלילי בעוצמה בינונית',
+            'אי אפשר לזהות רמת ועוצמת קשר בתרשים פיזור אלא רק באמצעות טבלת χ²'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1020, topic: 'Chi-Square', difficulty: 'Medium',
+        text: 'מה נכון לומר לגבי תנאי השימוש במבחן χ² על פי פלט 6?',
+        options: [
+            'למעלה מ20% מן התאים בעלי שכיחות צפויה נמוכה מ5, ולכן תנאי המבחן אינם מתקיימים',
+            'כל התאים עומדים בתנאי שכיחות צפויה של לפחות 5, ולכן המבחן תקף לחלוטין',
+            'יש תא אחד בלבד שבו השכיחות הצפויה היא אפס, ולכן התוכנה לא חישבה את סטטיסטי הχ²',
+            'מספר המקרים הכולל גדול מ200 ולכן התנאים למבחן χ² תמיד מתקיימים באופן אוטומטי'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Chi-Square Tests Footnote',
+            headers: ['Note'],
+            rows: [
+                ['a. 4 cells (66.7%) have expected count less than 5. The minimum expected count is 2.50.']
+            ]
+        }
+    },
+    {
+        id: 1021, topic: 'Chi-Square', difficulty: 'Medium',
+        text: 'על סמך טבלת התצפיות בפלט 6, איזה מן המשפטים הבאים נכון?',
+        options: [
+            'מבין בעלי השכלה תיכונית, 73.3% אינם מעשנים כרגע',
+            'מבין בעלי השכלה אקדמית, 73.3% מעשנים כיום',
+            'מבין אלו שדיווחו שהם לשעבר מעשנים, 66.7% הם בעלי השכלה תיכונית',
+            '16.7% מהמשתתפים בעלי השכלה תיכונית ואינם מעשנים'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'השכלה * האם אתה מעשן Crosstabulation',
+            headers: ['השכלה', 'כן', 'לא', 'לשעבר', 'Total'],
+            rows: [
+                ['תיכונית - Count', '2', '11', '2', '15'],
+                ['תיכונית - % within השכלה', '13.3%', '73.3%', '13.3%', '100%']
+            ]
+        }
+    },
+    {
+        id: 1022, topic: 'Chi-Square', difficulty: 'Hard',
+        text: 'כיצד נכון לדווח כמקובל על תוצאת מבחן χ² בפלט 6 (מבלי להתייחס לבעיית השכיחויות הצפויות)?',
+        options: [
+            'χ²(2)=0.60, p<.05',
+            'χ²(2)=0.54, p<.05',
+            'χ²(28)=0.60, p<.05',
+            'χ²(3)=2.50, p<.05'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Chi-Square Tests',
+            headers: ['Test', 'Value', 'df', 'Asymp. Sig. (2-sided)'],
+            rows: [
+                ['Pearson Chi-Square', '.600', '2', '.041'],
+                ['Likelihood Ratio', '.603', '2', '.040'],
+                ['N of Valid Cases', '28', '', '']
+            ]
+        }
+    },
+    {
+        id: 1023, topic: 'T-Tests', difficulty: 'Medium',
+        text: 'בפלט 7, מהו המשתנה הבלתי תלוי ומהו המשתנה התלוי?',
+        options: [
+            'משתנה בלתי תלוי: זמן המדידה (לפני שבץ מוחי, אחרי שבץ מוחי); משתנה תלוי: רמת הדיכאון',
+            'משתנה בלתי תלוי: רמת הדיכאון; משתנה תלוי: זמן המדידה (לפני שבץ מוחי, אחרי שבץ מוחי)',
+            'משתנה בלתי תלוי: רמת הדיכאון לאחר שבץ; משתנה תלוי: רמת הדיכאון לפני שבץ',
+            'משתנה בלתי תלוי: מספר הנבדקים; משתנה תלוי: זמן המדידה'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Paired Samples Test Context',
+            headers: ['Pair 1'],
+            rows: [
+                ['רמת דיכאון לפני שבץ מוחי - רמת דיכאון לאחר שבץ מוחי']
+            ]
+        }
+    },
+    {
+        id: 1024, topic: 'T-Tests', difficulty: 'Medium',
+        text: 'מהי המסקנה הנכונה מפלט 7 לגבי השינוי ברמת הדיכאון?',
+        options: [
+            'רמת הדיכאון לאחר שבץ מוחי גבוהה באופן מובהק מרמת הדיכאון לפני שבץ מוחי',
+            'רמת הדיכאון לפני שבץ מוחי גבוהה באופן מובהק מרמת הדיכאון לאחר שבץ מוחי',
+            'לא נמצא הבדל מובהק ברמת הדיכאון בין שתי המדידות',
+            'נמצא הבדל מובהק אך לא ניתן לדעת מאיזה כיוון הוא, כי הt שלילי'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Paired Samples Statistics & Test',
+            headers: ['Stat', 'Before', 'After', 'Sig.'],
+            rows: [
+                ['Mean', '.01', '.34', '<.001'],
+                ['t', '-6.687', '', '']
+            ]
+        }
+    },
+    {
+        id: 1025, topic: 'T-Tests', difficulty: 'Medium',
+        text: 'על סמך פלט 8, עבור איזה מזון לא נמצא הבדל מובהק בצריכה בין גברים לנשים (בהשערה דוכיוונית)?',
+        options: [
+            'טוסט עם ריבה',
+            'קפה ועוגה',
+            'טוסט עם חמאה',
+            'בכל שלושת המזונות נמצא הבדל מובהק בין גברים לנשים'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Independent Samples Test',
+            headers: ['Food', 'Sig. (2-tailed)'],
+            rows: [
+                ['טוסט עם ריבה', '.967'],
+                ['קפה ועוגה', '.018'],
+                ['טוסט עם חמאה', '.048']
+            ]
+        }
+    },
+    {
+        id: 1026, topic: 'T-Tests', difficulty: 'Hard',
+        text: 'על פי פלט 8, מה נכון לגבי צריכת "טוסט עם חמאה"?',
+        options: [
+            'נשים אוכלות בממוצע יותר טוסט עם חמאה מגברים, וההבדל ביניהם מובהק ברמת p<.05',
+            'גברים אוכלים בממוצע יותר טוסט עם חמאה מנשים, וההבדל ביניהם מובהק ברמת p<.05',
+            'נשים אוכלות בממוצע יותר טוסט עם חמאה מגברים, אך ההבדל ביניהם אינו מובהק סטטיסטית',
+            'אין שום מידע בפלט לגבי כיוון ההבדל בצריכת טוסט עם חמאה בין גברים לנשים'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Group Statistics (Toast with Butter)',
+            headers: ['Gender', 'Mean'],
+            rows: [
+                ['גברים', '6.57'],
+                ['נשים', '9.29']
+            ]
+        }
+    },
+    {
+        id: 1027, topic: 'T-Tests', difficulty: 'Hard',
+        text: 'בפלט 8 כיצד נכון לדווח על תוצאת המבחן עבור קפה ועוגה?',
+        options: [
+            't(34.16)=2.48, p<.05',
+            't(40)=2.48, p<.01',
+            't(34.16)=2.48, p>.05',
+            't(21)=2.48, p<.05'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Independent Samples Test (Coffee & Cake)',
+            headers: ['Assumption', 'Levene Sig', 't', 'df', 'Sig (2-tailed)'],
+            rows: [
+                ['Equal variances assumed', '.013', '2.477', '40', '.018'],
+                ['Equal variances not assumed', '', '2.477', '34.164', '.018']
+            ]
+        }
+    },
+    {
+        id: 1028, topic: 'T-Tests', difficulty: 'Easy', 
+        text: 'בפלט 9 (ANOVA), מהו המשתנה הבלתי תלוי ומהו המשתנה התלוי?',
+        options: [
+            'משתנה בלתי תלוי: קטגוריית הרכב; משתנה תלוי: שביעות רצון בעבודה',
+            'משתנה בלתי תלוי: שביעות רצון בעבודה; משתנה תלוי: קטגוריית מחיר הרכב',
+            'משתנה בלתי תלוי: שביעות רצון בעבודה; משתנה תלוי: הממוצע הכללי במדגם',
+            'משתנה בלתי תלוי: מינימום ומקסימום הציון; משתנה תלוי: קטגוריית הרכב'
+        ],
+        correct: 0,
+        output: null
+    },
+    {
+        id: 1029, topic: 'T-Tests', difficulty: 'Medium',
+        text: 'כיצד נכון לדווח על תוצאות הANOVA בפלט 9?',
+        options: [
+            'F(2,2205)=75.71, p<.001',
+            'F(2205,2)=75.71, p<.05',
+            'F(2,2207)=75.71, p>.05',
+            'F(3,2205)=75.71, p<.01'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'ANOVA',
+            headers: ['Source', 'df', 'F', 'Sig.'],
+            rows: [
+                ['Between Groups', '2', '75.71', '<.001'],
+                ['Within Groups', '2205', '', ''],
+                ['Total', '2207', '', '']
+            ]
+        }
+    },
+    {
+        id: 1030, topic: 'T-Tests', difficulty: 'Hard',
+        text: 'מה נכון לגבי ההבדלים בשביעות רצון בעבודה בין קבוצות קטגורית הרכב על פי פלט 9?',
+        options: [
+            'שביעות הרצון של בעלי רכב אקונומי נמוכה באופן מובהק משל בעלי רכב סטנדרטי ומרכב יוקרה, ואין הבדל מובהק בין רכב סטנדרטי לרכב יוקרה',
+            'שביעות הרצון של בעלי רכב יוקרה נמוכה באופן מובהק משל בעלי רכב אקונומי, אך שווה לזו של בעלי רכב סטנדרטי',
+            'קיימים הבדלים מובהקים בין כל שלוש הקבוצות: אקונומי, סטנדרטי ויוקרה',
+            'לא נמצאו הבדלים מובהקים כלל, ולכן אין משמעות למבחן Scheffé'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Multiple Comparisons (Scheffe)',
+            headers: ['(I) Category', '(J) Category', 'Mean Diff', 'Sig.'],
+            rows: [
+                ['אקונומי', 'סטנדרטי', '-.667*', '<.001'],
+                ['אקונומי', 'יוקרה', '-.870*', '<.001'],
+                ['סטנדרטי', 'יוקרה', '-.203', '.177']
+            ]
+        }
+    },
+    {
+        id: 1031, topic: 'Regression', difficulty: 'Medium',
+        text: 'על פי פלט 10, מה נכון לגבי מודל הרגרסיה המרובה לניבוי דימוי הגוף?',
+        options: [
+            'המודל מובהק ברמת p<.001 ומסביר כ24.3% מן השונות בדימוי הגוף',
+            'המודל אינו מובהק כלל, אף שמקדם המתאם R גבוה',
+            'המודל מסביר כמעט את כל השונות בדימוי הגוף (מעל 80%) ולכן אין צורך במשתני ניבוי נוספים',
+            'המודל מובהק רק ברמת p<.05 ומסביר פחות מ5% מן השונות בדימוי הגוף'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Model Summary & ANOVA',
+            headers: ['R Square', 'F', 'Sig.'],
+            rows: [
+                ['.243', '22.773', '<.001']
+            ]
+        }
+    },
+    {
+        id: 1032, topic: 'Regression', difficulty: 'Medium',
+        text: 'מה ניתן להסיק מפלט 10 לגבי מולטיקוליניאריות בין המנבאים?',
+        options: [
+            'אין בעיית מולטיקולינאריות משמעותית, כיוון שכל ערכי הVIF קרובים ל1 ונמוכים מ2',
+            'קיימת מולטיקולינאריות חמורה, כיוון שכל ערכי הVIF גבוהים מ10',
+            'קיימת מולטיקולינאריות חמורה בין כל שלושת המשתנים, כיוון שכל ערכי הTolerance הם 0',
+            'לא ניתן להסיק דבר לגבי מולטיקולינאריות משום שאין בטבלה ערכי VIF או Tolerance'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Coefficients - Collinearity Statistics',
+            headers: ['Model', 'Tolerance', 'VIF'],
+            rows: [
+                ['משטר אכילה', '.661', '1.512'],
+                ['מצב נפשי', '.702', '1.424'],
+                ['קשרי משפחה', '.814', '1.229']
+            ]
+        }
+    },
+    {
+        id: 1033, topic: 'Regression', difficulty: 'Medium',
+        text: 'על סמך טבלת המקדמים בפלט 10, איזה מן המשתנים המנבאים הוא החזק ביותר בניבוי דימוי הגוף?',
+        options: [
+            'קשרי משפחה',
+            'מצב נפשי (נטייה למצבי רוח משתנים)',
+            'משטר אכילה קפדני (נטייה לצום)',
+            'שלושת המשתנים בעלי אותו משקל בדיוק ולכן אין מנבא חזק או חלש יותר'
+        ],
+        correct: 0,
+        output: {
+            type: 'table',
+            title: 'Coefficients (Standardized)',
+            headers: ['Model', 'Beta'],
+            rows: [
+                ['משטר אכילה', '.151'],
+                ['מצב נפשי', '.197'],
+                ['קשרי משפחה', '.280']
+            ]
+        }
     }
 ];
 
@@ -280,6 +853,16 @@ function DeleteConfirmModal({ isOpen, onConfirm, onCancel }) {
 
 function SPSSOutput({ data }) {
     if (!data) return null;
+    
+    if (data.type === 'text') {
+        return (
+            <div className="my-4 border p-4 bg-white shadow-sm text-center">
+                <div className="font-bold text-base mb-2 text-gray-800">{data.title}</div>
+                <p className="text-gray-700">{data.text}</p>
+            </div>
+        );
+    }
+
     return (
         <div className="overflow-x-auto my-4 border p-2 bg-white shadow-sm" dir="ltr">
             <div className="font-bold text-base mb-2 text-center text-gray-800">{data.title}</div>
@@ -1128,28 +1711,6 @@ export default function App() {
                     </div>
                 </div>
             )}
-            
-            <style>{`
-                @keyframes fade-in-down {
-                    0% { opacity: 0; transform: translate(-50%, -20px); }
-                    100% { opacity: 1; transform: translate(-50%, 0); }
-                }
-                @keyframes fade-in-up {
-                    0% { opacity: 0; transform: translateY(20px); }
-                    100% { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes scale-in {
-                    0% { opacity: 0; transform: scale(0.9); }
-                    100% { opacity: 1; transform: scale(1); }
-                }
-                .animate-fade-in-down { animation: fade-in-down 0.3s ease-out forwards; }
-                .animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
-                .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
-                .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-            `}</style>
         </div>
     );
 }
