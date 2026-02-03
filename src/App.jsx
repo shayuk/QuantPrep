@@ -672,7 +672,7 @@ const INITIAL_QUESTION_BANK = [
     },
     {
         id: 1029, topic: 'T-Tests', difficulty: 'Medium',
-        text: 'כיצד נכון לדווח על תוצאת הANOVA בפלט 9?',
+        text: 'כיצד נכון לדווח על תוצאות הANOVA בפלט 9?',
         options: [
             'F(2,2205)=75.71, p<.001',
             'F(2205,2)=75.71, p<.05',
@@ -777,14 +777,34 @@ const INITIAL_QUESTION_BANK = [
 
 // --- HELPER FUNCTIONS ---
 
-const callGemini = async (prompt, apiKey) => {
+const callGemini = async (prompt, apiKey, imageBase64 = null) => {
     if (!apiKey) return null;
     try {
+        const parts = [{ text: prompt }];
+
+        if (imageBase64) {
+            // Check if header exists and strip it, or use raw if already stripped
+            // Usually data:image/png;base64,...
+            const matches = imageBase64.match(/^data:(.+);base64,(.+)$/);
+            if (matches) {
+                parts.push({
+                    inlineData: {
+                        mimeType: matches[1],
+                        data: matches[2]
+                    }
+                });
+            } else {
+                 // Assume it's raw base64 if no header, default to png for safety or try detection
+                 // For this app, let's assume standard data URI format from FileReader
+                 console.warn("Image data might be missing data URI header");
+            }
+        }
+
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                contents: [{ parts: parts }]
             })
         });
         const data = await response.json();
@@ -932,20 +952,40 @@ function AddQuestionForm({ onSave, onCancel, topics, initialData = null, showNot
             showNotification("יש להזין מפתח API בהגדרות כדי להשתמש ב-AI", "error");
             return;
         }
-        const topicToUse = formData.topic || "SPSS Statistics";
+        
         setIsGenerating(true);
         try {
-            const prompt = `Generate a single multiple choice question in Hebrew about SPSS statistics regarding the topic "${topicToUse}".
-            Return strictly a JSON object with this structure:
-            {
-                "text": "The question text in Hebrew",
-                "options": ["Option 1 in Hebrew", "Option 2 in Hebrew", "Option 3 in Hebrew", "Option 4 in Hebrew"],
-                "correct": 0,
-                "difficulty": "Medium"
+            let prompt = "";
+            let imagePayload = null;
+
+            if (formData.image) {
+                // Image Prompt
+                prompt = `Analyze the attached statistical output (SPSS table, graph, or data).
+                          Generate a challenging multiple-choice question in Hebrew based *specifically* on the data, significance levels, or statistical tests shown in this image.
+                          The question should test the student's ability to interpret the output correctly.
+                          Return strictly a JSON object with this structure (no markdown):
+                          {
+                            "text": "The question text in Hebrew",
+                            "options": ["Correct Option in Hebrew", "Distractor 1", "Distractor 2", "Distractor 3"],
+                            "correct": 0,
+                            "difficulty": "Hard"
+                          }`;
+                imagePayload = formData.image;
+            } else {
+                // Text Prompt (Existing logic)
+                const topicToUse = formData.topic || "SPSS Statistics";
+                prompt = `Generate a single multiple choice question in Hebrew about SPSS statistics regarding the topic "${topicToUse}".
+                Return strictly a JSON object with this structure (no markdown):
+                {
+                    "text": "The question text in Hebrew",
+                    "options": ["Correct Option in Hebrew", "Distractor 1", "Distractor 2", "Distractor 3"],
+                    "correct": 0,
+                    "difficulty": "Medium"
+                }
+                Ensure the content is accurate and suitable for university students.`;
             }
-            Ensure the content is accurate and suitable for university students. Do not include markdown code blocks, just the raw JSON.`;
             
-            const result = await callGemini(prompt, apiKey);
+            const result = await callGemini(prompt, apiKey, imagePayload);
             
             if (result) {
                 // Remove potential markdown formatting if present
@@ -1086,6 +1126,11 @@ function AddQuestionForm({ onSave, onCancel, topics, initialData = null, showNot
                                 </div>
                             )}
                         </div>
+                         {formData.image && (
+                            <p className="text-xs text-blue-600 mt-1">
+                                * טיפ: לחץ על כפתור "צור שאלה אוטומטית" כדי שה-AI ינתח את התמונה שהעלית ויכתוב שאלה בהתאם.
+                            </p>
+                        )}
                     </div>
 
                     <div className="space-y-3">
@@ -1348,13 +1393,21 @@ export default function App() {
             return;
         }
         setLoadingHintId(question.id);
-        const prompt = `The student is answering this SPSS multiple choice question in Hebrew:
-        Question: "${question.text}"
-        Options: ${question.options.join(', ')}
         
-        Provide a helpful hint in Hebrew that guides them to the right concept without explicitly stating the answer or the correct option number. Keep it short (1-2 sentences).`;
+        let prompt = `The student is answering this SPSS multiple choice question in Hebrew:
+        Question: "${question.text}"
+        Options: ${question.options.join(', ')}`;
 
-        const hint = await callGemini(prompt, apiKey);
+        let imagePayload = null;
+
+        if (question.image) {
+            prompt += `\nThere is an attached image (SPSS output) that contains the answer. Analyze it to provide the hint.`;
+            imagePayload = question.image;
+        }
+        
+        prompt += `\nProvide a helpful hint in Hebrew that guides them to the right concept or where to look in the output without explicitly stating the answer or the correct option number. Keep it short (1-2 sentences).`;
+
+        const hint = await callGemini(prompt, apiKey, imagePayload);
         setHints(prev => ({ ...prev, [question.id]: hint || "לא ניתן היה לייצר רמז כרגע." }));
         setLoadingHintId(null);
     };
