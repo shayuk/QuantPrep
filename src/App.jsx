@@ -1206,10 +1206,26 @@ export default function App() {
         return localStorage.getItem('statmaster_apikey') || '';
     });
 
-    const [config, setConfig] = useState({
-        topics: { General: 0, Descriptive: 0, Reliability: 0, 'T-Tests': 0, 'Chi-Square': 0, Regression: 0, Correlation: 0 },
-        difficulties: { Easy: 0, Medium: 0, Hard: 0 }
+    const [config, setConfig] = useState(() => {
+        // 1. הגדרת נושאי ברירת המחדל
+        const defaultTopics = ['General', 'Descriptive', 'Reliability', 'T-Tests', 'Chi-Square', 'Regression', 'Correlation'];
+        const topicsObj = {};
+        
+        defaultTopics.forEach(t => topicsObj[t] = 0);
+        
+        // 2. סריקה דינמית: נוודא שכל נושא שקיים בפועל במאגר השאלות מקבל ייצוג ב-UI
+        questions.forEach(q => {
+            if (topicsObj[q.topic] === undefined) {
+                topicsObj[q.topic] = 0;
+            }
+        });
+
+        return {
+            topics: topicsObj,
+            difficulties: { Easy: 0, Medium: 0, Hard: 0 }
+        };
     });
+    
     const [selectedQuestions, setSelectedQuestions] = useState([]);
     const [userAnswers, setUserAnswers] = useState({});
     const [score, setScore] = useState(0);
