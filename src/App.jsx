@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, RefreshCw, CheckCircle, AlertCircle, Settings, Play, Edit, Plus, Image as ImageIcon, X, Trash2, Database, Search, Save, ArrowRight, AlertTriangle, Sparkles, Loader2, Lightbulb, Key, RotateCcw } from 'lucide-react';
+import { Download, RefreshCw, CheckCircle, AlertCircle, Settings, Play, Edit, Plus, Image as ImageIcon, X, Trash2, Database, Search, Save, ArrowRight, AlertTriangle, Sparkles, Loader2, Lightbulb, Key, RotateCcw, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // --- INITIAL DATA BANK ---
@@ -1354,6 +1354,76 @@ export default function App() {
         if (newSelection.length === 0) setStep('config');
     };
 
+    // --- Word Export Logic ---
+    const exportToWord = () => {
+        if (selectedQuestions.length === 0) {
+            showNotification("אין שאלות לייצוא", "error");
+            return;
+        }
+
+        let content = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+            <meta charset='utf-8'>
+            <title>מבחן</title>
+        </head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; text-align: right;">
+            <h1 style="text-align: center;">מבחן בסטטיסטיקה ו-SPSS</h1>
+            <br/>
+        `;
+
+        selectedQuestions.forEach((q, idx) => {
+            content += `<div style="margin-bottom: 24px; page-break-inside: avoid;">`;
+            content += `<p style="font-size: 14pt; font-weight: bold; margin-bottom: 10px;">${idx + 1}. ${q.text}</p>`;
+            
+            if (q.output) {
+                if (q.output.type === 'text') {
+                    content += `<div style="direction: ltr; text-align: left; border: 1px solid #000; padding: 10px; margin: 10px 0; background-color: #f9f9f9;"><strong>${q.output.title}</strong><br/>${q.output.text}</div>`;
+                } else {
+                    content += `<p style="font-weight: bold; text-align: center; margin-bottom: 5px; direction: ltr;">${q.output.title}</p>`;
+                    content += `<table style="border-collapse: collapse; width: 100%; direction: ltr; margin-bottom: 15px;" dir="ltr"><thead><tr>`;
+                    q.output.headers.forEach(h => { 
+                        content += `<th style="border: 1px solid #000; padding: 5px; background-color: #f2f2f2; text-align: center; font-size: 10pt;">${h}</th>`; 
+                    });
+                    content += `</tr></thead><tbody>`;
+                    q.output.rows.forEach(row => {
+                        content += `<tr>`;
+                        row.forEach(cell => { 
+                            content += `<td style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 10pt;">${cell}</td>`; 
+                        });
+                        content += `</tr>`;
+                    });
+                    content += `</tbody></table>`;
+                }
+            }
+
+            if (q.image) {
+                 content += `<p style="text-align: center;"><img src="${q.image}" style="max-width: 100%; height: auto; margin-top: 10px; margin-bottom: 10px;"/></p>`;
+            }
+
+            content += `<div style="margin-top: 10px;">`;
+            q.options.forEach((opt, optIdx) => {
+                const letter = String.fromCharCode(1488 + optIdx); // Hebrew aleph-bet formatting
+                content += `<p style="margin: 5px 0 5px 15px; font-size: 12pt;">${letter}. ${opt}</p>`;
+            });
+            content += `</div></div><hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;"/>`;
+        });
+
+        content += `</body></html>`;
+        
+        // Export logic: construct Blob with msword MIME type
+        const blob = new Blob(['\ufeff' + content], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'SPSS_Quiz.doc';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showNotification("השאלון יוצא ל-Word בהצלחה!", "success");
+    };
+
     const submitQuiz = () => {
         let correctCount = 0;
         selectedQuestions.forEach(q => {
@@ -1631,6 +1701,9 @@ export default function App() {
                     <div className="flex gap-4">
                         <button onClick={() => setStep('config')} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition">
                             חזור להגדרות
+                        </button>
+                        <button onClick={exportToWord} className="flex-1 bg-indigo-100 text-indigo-800 py-3 rounded-xl font-semibold hover:bg-indigo-200 transition flex items-center justify-center gap-2 border border-indigo-200">
+                            <FileText className="w-5 h-5" /> ייצא ל-Word
                         </button>
                         {selectedQuestions.length > 0 && 
                             <button onClick={() => setStep('quiz')} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg">
